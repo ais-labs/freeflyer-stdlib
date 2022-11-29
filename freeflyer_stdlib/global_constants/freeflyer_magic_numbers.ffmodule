@@ -1,0 +1,50 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  This module contains global constants that can be used to add semantic meaning to numbers used
+//  by FreeFlyer as configuration.
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// known bad default values. these are used to distinguish between uninitialized values and ones that just
+// happen to have the FreeFlyer default for that data type
+Global Constant String   UNDEFINED_STRING   = "_____UNDEFINED____STRING____";                 /// default value for undefined String
+Global          TimeSpan UNDEFINED_TIMESPAN = "Jul 20 1969 20:17:40.000".ParseCalendarDate(); /// default value for undefined TimeSpan
+Global Constant Variable UNDEFINED_VARIABLE = 9999999999;                                     /// default value for undefined Variable
+
+
+// for use as boolean true/false values
+Global Constant Variable FALSE = 0; /// 'false' boolean value
+Global Constant Variable TRUE  = 1; /// 'true' boolean value
+
+
+// ConsoleWindow.CurrentFontType
+Global Constant Variable CONSOLE__FONT_TYPE_VARIABLE_WIDTH = 0; /// sets ConsoleWindow to variable-width font
+Global Constant Variable CONSOLE__FONT_TYPE_FIXED_WIDTH    = 1; /// sets ConsoleWindow to fixed-width font
+
+
+// ConsoleWindow.DockMode
+Global Constant Variable CONSOLE__DOCK_UNDOCKED = 0; /// sets ConsoleWindow to undocked
+Global Constant Variable CONSOLE__DOCK_TOP      = 1; /// docks ConsoleWindow at top of screen
+Global Constant Variable CONSOLE__DOCK_BOTTOM   = 2; /// docks ConsoleWindow at bottom of screen
+Global Constant Variable CONSOLE__DOCK_LEFT     = 3; /// docks ConsoleWIndow at left of screen
+Global Constant Variable CONSOLE__DOCK_RIGHT    = 4; /// docks ConsoleWIndow at right of screen
+
+
+// FreeFlyer general
+Global Constant Variable FF_PERIAPSIS = 0; /// periapsis value used in several FreeFlyer functions
+Global Constant Variable FF_APOAPSIS  = 1; /// apoapsis value used in several FreeFlyer functions
+
+
+// ImpulsiveBurn.AttitudeSystem
+Global Constant Variable IMPULSIVE_BURN_ATT__J2000      = 0; /// Mean of J2000
+Global Constant Variable IMPULSIVE_BURN_ATT__VNB        = 1; /// VNB
+Global Constant Variable IMPULSIVE_BURN_ATT__LVLH       = 2; /// LVLH
+Global Constant Variable IMPULSIVE_BURN_ATT__BODY_FIXED = 3; /// Body Fixed
+Global Constant Variable IMPULSIVE_BURN_ATT__GEODETIC   = 4; /// Geodetic
+Global Constant Variable IMPULSIVE_BURN_ATT__UVW        = 5; /// UVW
+Global Constant Variable IMPULSIVE_BURN_ATT__RIC        = 6; /// RIC
+
+
+// JsonInterface
+Global Constant Variable JSON__IGNORE_ON_MISSING_PROP = 0; /// do not require JSON input and target struct to match
+Global Constant Variable JSON__ERROR_ON_MISSING_PROP  = 1; /// require JSON input and target struct to match

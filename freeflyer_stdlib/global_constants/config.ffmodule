@@ -1,0 +1,33 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  This module contains constants used for colors elsewhere. Allows for simple changing of colors
+//  across the project without editing many missionplans. This can be handy for meeting color
+//  contrast standards. The intent here is that these are colors that don't require extreme
+//  flexibility and thus don't need to be passed in as procedure arguments or as configuration.
+//  Instead, this module serves as a sort of compromise between config and magic numbers in code.
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Global Constant Variable CONSOLE__BACKGROUND_COLOR = ColorTools.RGB(0.1, 0.1, 0.1); /// console background
+Global Constant Variable CONSOLE__DEFAULT_SIZE     = 20;                            /// default size/height of console in rows
+Global Constant Variable CONSOLE__FOREGROUND_COLOR = ColorTools.White;              /// console foreground
+
+
+
+Global Constant String LOG__TIMESTAMP_FMT = 'YYYY-MM-DD hh:mm:ss.sss'; /// used when generating timestamp for log message
+Global Constant String LOG__TEMPLATE      = '[<TS>][<LVL>][<MP>][<LOC>] <MSG>'; /// used to arrange components of a log line
+
+Global Constant String LOG__LEVEL_VERBOSE = 'V'; /// label for VERBOSE level
+Global Constant String LOG__LEVEL_DEBUG   = 'D'; /// label for DEBUG level
+Global Constant String LOG__LEVEL_INFO    = 'I'; /// label for INFO level
+Global Constant String LOG__LEVEL_WARN    = 'W'; /// label for WARN level
+Global Constant String LOG__LEVEL_ERROR   = 'E'; /// label for ERROR level
+Global Constant String LOG__LEVEL_CRIT    = 'C'; /// label for CRIT level
+
+Global Constant Variable LOG__COLOR_VERBOSE = ColorTools.RosyBrown;    /// color for VERBOSE log lines
+Global Constant Variable LOG__COLOR_DEBUG   = ColorTools.LightSkyBlue; /// color for DEBUG log lines
+Global Constant Variable LOG__COLOR_INFO    = ColorTools.White;        /// color for INFO log lines
+Global Constant Variable LOG__COLOR_WARN    = ColorTools.Gold;         /// color for WARN log lines
+Global Constant Variable LOG__COLOR_ERROR   = ColorTools.Tomato;       /// color for ERROR log lines
+Global Constant Variable LOG__COLOR_CRIT    = ColorTools.Magenta;      /// color for CRIT log lines

@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<FreeFlyerProjectFile xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" timePrecisionMode="nanosecond" schemaVersion="7.6.0.2">
+  <ProjectInformation>
+    <Author />
+    <Source />
+    <FreeFlyerVersion>7.6.1.54738</FreeFlyerVersion>
+    <RevisionNumber />
+    <Title />
+    <Subject />
+    <Category />
+    <Keywords />
+    <Comments />
+    <Notes />
+  </ProjectInformation>
+  <ProjectPreferences>
+    <General>
+      <LockProjectFromEditing>false</LockProjectFromEditing>
+    </General>
+    <OnOpen>
+      <ShowControlSequence>true</ShowControlSequence>
+      <ShowEmptyEnvironment>false</ShowEmptyEnvironment>
+      <ShowNotes>false</ShowNotes>
+      <ShowHome>false</ShowHome>
+      <ShowOutput>false</ShowOutput>
+      <CreateBackup>false</CreateBackup>
+      <BackupLocation></BackupLocation>
+    </OnOpen>
+    <OnRun>
+      <SaveMissionPlan>false</SaveMissionPlan>
+      <HideWarningMessages>false</HideWarningMessages>
+    </OnRun>
+  </ProjectPreferences>
+  <ProjectDataFiles>
+    <EarthOrientationFile useDefault="true"></EarthOrientationFile>
+    <ElectronDensityCoefficientFile useDefault="true"></ElectronDensityCoefficientFile>
+    <GeopotentialFile useDefault="true"></GeopotentialFile>
+    <HarrisPriesterDragFile useDefault="true"></HarrisPriesterDragFile>
+    <JacchiaAtmosphereModelFile useDefault="true"></JacchiaAtmosphereModelFile>
+    <LeapSecondFile useDefault="true"></LeapSecondFile>
+    <MagneticFieldFile useDefault="true"></MagneticFieldFile>
+    <PlanetaryFile useDefault="true"></PlanetaryFile>
+    <StationGeodeticsFile useDefault="true"></StationGeodeticsFile>
+    <SolidTideFile useDefault="true"></SolidTideFile>
+    <DSTFile useDefault="true"></DSTFile>
+    <StarFieldFile useDefault="true"></StarFieldFile>
+  </ProjectDataFiles>
+  <ProjectObjects>
+    <Object>
+      <SolarSystem name="FF_SolarSystem" isConstant="false" isGlobal="true">
+        <Name>FF_SolarSystem</Name>
+        <ComputePolarMotion>true</ComputePolarMotion>
+        <ApplyUT1Correction>true</ApplyUT1Correction>
+        <COUpdateInterval units="s" displayed_units="s">0</COUpdateInterval>
+        <NPUpdateInterval units="s" displayed_units="s">1800</NPUpdateInterval>
+        <IonosphereOptions>
+          <IonosphereOptions name="FF_SolarSystem_|ionoOptions|" isConstant="false" isGlobal="true">
+            <Name>FF_SolarSystem_|ionoOptions|</Name>
+            <MaximumHeight units="km" displayed_units="km">1000</MaximumHeight>
+            <MinimumHeight units="km" displayed_units="km">80</MinimumHeight>
+            <IntegrationStepSize units="km" displayed_units="km">25</IntegrationStepSize>
+            <ScaleFactor units="" displayed_units="">1</ScaleFactor>
+            <Model>0</Model>
+            <metadata dim="0" />
+          </IonosphereOptions>
+        </IonosphereOptions>
+        <NoradKeplerEqTolerance units="" displayed_units="">1e-12</NoradKeplerEqTolerance>
+        <metadata dim="0" />
+      </SolarSystem>
+    </Object>
+    <Object>
+      <ConsoleWindow name="Console" isConstant="false" isGlobal="true">
+        <Name>Console</Name>
+        <WindowTitle>Console</WindowTitle>
+        <WordWrap>false</WordWrap>
+        <CurrentTextColor>0</CurrentTextColor>
+        <BackColor>16777215</BackColor>
+        <Dimension units="" displayed_units="">10</Dimension>
+        <DockMode>1</DockMode>
+        <CurrentFontType>0</CurrentFontType>
+        <UseStdOut>false</UseStdOut>
+        <ShowOnRun>false</ShowOnRun>
+        <metadata dim="0" />
+      </ConsoleWindow>
+    </Object>
+  </ProjectObjects>
+  <ProjectMissionSequence>
+    <ProjectExternals />
+    <ProjectCommands>
+      <FreeForm enabled="true">
+        <Label>Description</Label>
+        <Bookmarks />
+        <Breakpoints />
+        <FreeFormScript><![CDATA[
+//  Basic FreeFlyer missionplan that works through all aspects of the Python/FreeFlyer API. This is
+//  essentially a simple functional test that is designed to serve as a proof of concept while also
+//  catching large errors.
+]]></FreeFormScript>
+      </FreeForm>
+      <FreeForm enabled="true">
+        <Label>Boilerplate</Label>
+        <Bookmarks />
+        <Breakpoints />
+        <FreeFormScript><![CDATA[
+ApiLabel "missionplan_init"; // at this point the missionplan has loaded but executed no code
+TimeSpan missionplan_start_time = SystemTime(); /// start time for this run of the missionplan
+String CODE_LOCATION = 'FF2 boilerplate'; /// used by logging macros to indicate from where a line was logged
+
+// standard variables, assumed to be required in all missionplans
+String        err;        /// conveys error messages from procedures
+Variable      i;          /// loop index variable
+Variable      j;          /// loop index variable
+Variable      try_failed; /// indicates a Try block has failed
+JsonInterface json;       /// interface used for ingesting and outputting JSON
+
+//// Include global constants
+Include "../../../freeflyer_stdlib/global_constants/config.ffmodule";
+Include "../../../freeflyer_stdlib/global_constants/freeflyer_magic_numbers.ffmodule";
+
+//// Include log procedures
+Include "../../../freeflyer_stdlib/log.ffmodule";
+
+//// Set up and show console
+Call consoleSetup(CONSOLE__DEFAULT_SIZE);
+
+//// Include other modules
+// [ other modules go here ]
+
+ApiLabel "includes_loaded"; // at this point, all includes have successfully been loaded
+]]></FreeFormScript>
+      </FreeForm>
+      <FreeForm enabled="true">
+        <Label>Config</Label>
+        <Bookmarks />
+        <Breakpoints />
+        <FreeFormScript><![CDATA[
+CODE_LOCATION = 'FF3 config';
+Call logDebug("ingesting and validating config");
+
+// contains all input (configuration, paths, etc) for missionplan
+Struct Config;
+    Variable circularize_seed_kms;        // seed value for in-track velocity of circularize burn
+    Variable circularize_perturb_kms;     // perturb value for in-track velocity of circularize burn
+    Variable circularize_lower_limit_kms; // lower limit for in-track velocity of circularize burn
+    Variable circularize_upper_limit_kms; // upper limit for in-track velocity of circularize burn
+    Variable desired_sma_change_km;       // desired SMA change after burn pair (kilometers)
+    Variable post_burn_ecc_tol;           // tolerance on how circular the orbit needs to be after the burns
+    Variable raise_seed_kms;              // seed value for in-track velocity of raise burn
+    Variable raise_perturb_kms;           // perturb value for in-track velocity of raise burn
+    Variable raise_lower_limit_kms;       // lower limit for in-track velocity of raise burn
+    Variable raise_upper_limit_kms;       // upper limit for in-track velocity of raise burn
+    String   sc_display_name;             // DisplayName to use on demonstration spacecraft
+    Variable sma_change_tol_km;           // how close to desired SMA goal targeter needs to reach
+    String   test_message;                // test message to simply repeat as-is in response
+End;
+Include "../../../freeflyer_stdlib/config_ingestion.ffmodule"; // must go after Config defintion
+
+Define Procedure setConfigDefaults(Config config);
+    config.circularize_seed_kms        = UNDEFINED_VARIABLE;
+    config.circularize_perturb_kms     = UNDEFINED_VARIABLE;
+    config.circularize_lower_limit_kms = UNDEFINED_VARIABLE;
+    config.circularize_upper_limit_kms = UNDEFINED_VARIABLE;
+    config.desired_sma_change_km       = UNDEFINED_VARIABLE;
+    config.post_burn_ecc_tol           = UNDEFINED_VARIABLE;
+    config.raise_seed_kms              = UNDEFINED_VARIABLE;
+    config.raise_perturb_kms           = UNDEFINED_VARIABLE;
+    config.raise_lower_limit_kms       = UNDEFINED_VARIABLE;
+    config.raise_upper_limit_kms       = UNDEFINED_VARIABLE;
+    config.sc_display_name             = UNDEFINED_STRING;
+    config.sma_change_tol_km           = UNDEFINED_VARIABLE;
+    config.test_message                = UNDEFINED_STRING;
+EndProcedure;
+
+Define Procedure checkConfigForUndefinedFields(Config config);
+    Constant String CODE_LOCATION = 'checkConfigForUndefinedFields'; /// code location for logging
+    StringArray errors; /// collects all errors found during checks
+
+    If (config.circularize_seed_kms == UNDEFINED_VARIABLE);        errors.PushBack("field 'circularize_seed_kms' is missing from JSON");    End;
+    If (config.circularize_perturb_kms == UNDEFINED_VARIABLE);     errors.PushBack("field 'circularize_perturb_kms' is missing from JSON"); End;
+    If (config.circularize_lower_limit_kms== UNDEFINED_VARIABLE);  errors.PushBack("field 'circularize_lower_kms' is missing from JSON");   End;
+    If (config.circularize_upper_limit_kms == UNDEFINED_VARIABLE); errors.PushBack("field 'circularize_upper_kms' is missing from JSON");   End;
+    If (config.desired_sma_change_km == UNDEFINED_VARIABLE);       errors.PushBack("field 'desired_sma_change_km' is missing from JSON");   End;
+    If (config.post_burn_ecc_tol == UNDEFINED_VARIABLE);           errors.PushBack("field 'post_burn_ecc_tol' is missing from JSON");       End;
+    If (config.raise_seed_kms == UNDEFINED_VARIABLE);              errors.PushBack("field 'raise_seed_kms' is missing from JSON");          End;
+    If (config.raise_perturb_kms == UNDEFINED_VARIABLE);           errors.PushBack("field 'raise_perturb_kms' is missing from JSON");       End;
+    If (config.raise_lower_limit_kms == UNDEFINED_VARIABLE);       errors.PushBack("field 'raise_lower_kms' is missing from JSON");         End;
+    If (config.raise_upper_limit_kms == UNDEFINED_VARIABLE);       errors.PushBack("field 'raise_upper_kms' is missing from JSON");         End;
+    If (config.sc_display_name == UNDEFINED_STRING);               errors.PushBack("field 'sc_display_name' is missing from JSON");         End;
+    If (config.sma_change_tol_km == UNDEFINED_VARIABLE);           errors.PushBack("field 'sma_change_tol_km' is missing from JSON");       End;
+    If (config.test_message == UNDEFINED_STRING);                  errors.PushBack("field 'test_message' is missing from JSON");            End;
+
+    
+    Variable i; /// loop index
+    For i = 0 to errors.Dimension-1;
+        Call logError(errors[i]);
+    End;
+    
+    If (errors.Dimension);
+        Call safeStop("missing fields found when checking config. see logs for details.");
+    End;
+EndProcedure;
+
+//// ingest config
+json.MissingPropertyBehavior = JSON__ERROR_ON_MISSING_PROP;
+
+Config config; /// configuration for missionplan
+Call setConfigDefaults(config);
+
+String api_config_json; /// string used by the API layer to inject a serialized JSON string used as config
+
+ApiLabel "config_injection";
+
+Call ingestJSON(
+    // input
+    './default_config.json',     // path to default configuration file to be used if config string not set by API
+    api_config_json,             // JSON string to deserialize (leave empty to rely on fallback file)
+    JSON__ERROR_ON_MISSING_PROP, // if there are extra fields in the input JSON
+    // output
+    err,    // error message
+    config  // Config struct to be populated
+);
+If (err != '');
+   
+End;
+
+Call checkConfigForUndefinedFields(config);
+
+
+
+
+//// validate config
+StringArray errors; /// collects unrecoverable config errors
+
+If (abs(config.desired_sma_change_km) > 1000);
+    Call logWarn("suspiciously large desired_sma_change_km: " + config.desired_sma_change_km.ToString());
+End;
+
+If (config.sc_display_name == "");
+    errors.PushBack("sc_display_name must be non-empty");
+End;
+
+If (config.test_message == "");
+    errors.PushBack("test_message must be non-empty");
+End;
+
+
+For i = 0 to errors.Dimension-1;
+    Call logError(errors[i]);
+End;
+
+If (errors.Dimension);
+    Call safeStop("failed to pass config validation. see logs for details");
+End;
+]]></FreeFormScript>
+      </FreeForm>
+      <FreeForm enabled="true">
+        <Label>Spacecraft setup</Label>
+        <Bookmarks />
+        <Breakpoints />
+        <FreeFormScript><![CDATA[
+CODE_LOCATION = 'FF4 sc setup';
+Call logDebug("setting up spacecraft");
+
+Spacecraft sc; /// spacecraft used for demonstration
+
+sc.DisplayName = config.sc_display_name;
+]]></FreeFormScript>
+      </FreeForm>
+      <FreeForm enabled="true">
+        <Label>Target SMA change</Label>
+        <Bookmarks />
+        <Breakpoints />
+        <FreeFormScript><![CDATA[
+CODE_LOCATION = 'FF5 sma';
+Call logDebug("targeting section");
+
+
+DifferentialCorrector change_sma_dc; /// differential corrector used to target SMA change
+
+Call logDebug("targeting " + config.desired_sma_change_km.ToString()
+              + " km SMA change for " + sc.DisplayName
+);
+
+ImpulsiveBurn raise_burn; /// first burn, which raises SMA
+raise_burn.AttitudeSystem = IMPULSIVE_BURN_ATT__VNB;
+
+ImpulsiveBurn circularize_burn; /// second burn, which circularizes the orbit
+circularize_burn.AttitudeSystem = IMPULSIVE_BURN_ATT__VNB;
+
+Constant Variable orig_sc_blj2a = sc.BLJ2A; /// original BLJ2A value before maneuvers
+
+try_failed = 0;
+Try sending ErrorCount to try_failed;
+    Target using change_sma_dc;
+        Iterate sc;
+        
+        Vary raise_burn.BurnDirection[0] = config.raise_seed_kms + config.raise_perturb_kms
+                                           within <config.raise_lower_limit_kms,
+                                                   config.raise_upper_limit_kms>;
+
+        Vary circularize_burn.BurnDirection[0] = config.circularize_seed_kms + config.circularize_perturb_kms
+                                           within <config.circularize_lower_limit_kms,
+                                                   config.circularize_upper_limit_kms>;
+        Call logDebug("trying raise_burn delta-v:       " + raise_burn.BurnDirection[0].ToString() + " km/s");
+        Call logDebug("trying circularize_burn delta-v: " + circularize_burn.BurnDirection[0].ToString() + " km/s");
+
+
+
+        sc.Maneuver(raise_burn);
+        
+        sc.StepToApsis(FF_APOAPSIS);
+        
+        sc.Maneuver(circularize_burn);
+
+        
+
+        Call logDebug("change_sma_dc " + change_sma_dc.IterationMode + " | "
+                      + "achieved: " + sc.DisplayName + ".BLJ2A: " + sc.BLJ2A.ToString()
+                      + ", goal: " + (orig_sc_blj2a + config.desired_sma_change_km).ToString() + " km"
+                      + ", diff: " + (orig_sc_blj2a + config.desired_sma_change_km - sc.BLJ2A).ToString() + " km"
+        );
+        Call logDebug("change_sma_dc " + change_sma_dc.IterationMode + " | "
+                      + "achieved: " + sc.DisplayName + ".BLJ2E: " + sc.BLJ2E.ToString()
+                      + ", goal: 0"
+                      + ", diff: " + (0 - sc.BLJ2E).ToString()
+        );        
+        
+        Achieve sc.BLJ2A = (orig_sc_blj2a + config.desired_sma_change_km) +/- config.sma_change_tol_km;        
+        Achieve sc.BLJ2E = 0 +/- config.post_burn_ecc_tol;
+    End;
+End;
+If (try_failed);
+    Call logTryErrors();
+    Call safeStop("failed to target");
+End;
+
+Call logInfo("total targeter iterations: " + change_sma_dc.Iterations.ToString());
+Call logInfo("raise burn in-track delta-v: " + raise_burn.BurnDirection[0].ToString() + " km/s");
+Call logInfo("circularize burn in-track delta-v: " + circularize_burn.BurnDirection[0].ToString() + " km/s");
+Call logInfo("total SMA change: " + (sc.BLJ2A - orig_sc_blj2a).ToString() + " km");
+]]></FreeFormScript>
+      </FreeForm>
+      <FreeForm enabled="true">
+        <Label>Wrapup</Label>
+        <Bookmarks />
+        <Breakpoints />
+        <FreeFormScript><![CDATA[
+CODE_LOCATION = 'FF6 wrapup';
+Call logDebug("wrapping up");
+
+Struct ApiResponse;
+    Variable circularize_burn_deltav_kms; // in-track delta-v of circularize burn (km/s)
+    Variable missionplan_duration_sec;    // missionplan runtime duration (seconds)
+    String   missionplan_start_time;      // start time of missionplan
+    Variable raise_burn_deltav_kms;       // in-track delta-v of raise burn (km/s)
+    String   test_message;                // test message input during config, just passing through
+End;
+
+ApiResponse api_response; /// carries missionplan response back to the API
+api_response.circularize_burn_deltav_kms = circularize_burn.BurnDirection[0];
+api_response.missionplan_duration_sec    = (SystemTime() - missionplan_start_time).ToSeconds();
+api_response.missionplan_start_time      = missionplan_start_time.ConvertToCalendarDate();
+api_response.raise_burn_deltav_kms       = raise_burn.BurnDirection[0];
+api_response.test_message                = config.test_message + " (test!)";
+
+String api_response_json = json.Serialize(api_response); /// holds serialized copy of api_response struct
+
+Call logDebug("execution complete. total run time: " + api_response.missionplan_duration_sec.ToString() + " seconds");
+
+ApiLabel "main_execution_complete"; // at this point the json_response can be accessed but some
+                                    // wrapup work (such as log archiving) may remain
+
+
+
+ApiLabel "missionplan_end"; // nothing is allowed to happen after this line
+]]></FreeFormScript>
+      </FreeForm>
+    </ProjectCommands>
+  </ProjectMissionSequence>
+  <ProjectScript><![CDATA[
+//  Basic FreeFlyer missionplan that works through all aspects of the Python/FreeFlyer API. This is
+//  essentially a simple functional test that is designed to serve as a proof of concept while also
+//  catching large errors.
+
+
+ApiLabel "missionplan_init"; // at this point the missionplan has loaded but executed no code
+TimeSpan missionplan_start_time = SystemTime(); /// start time for this run of the missionplan
+String CODE_LOCATION = 'FF2 boilerplate'; /// used by logging macros to indicate from where a line was logged
+
+// standard variables, assumed to be required in all missionplans
+String        err;        /// conveys error messages from procedures
+Variable      i;          /// loop index variable
+Variable      j;          /// loop index variable
+Variable      try_failed; /// indicates a Try block has failed
+JsonInterface json;       /// interface used for ingesting and outputting JSON
+
+//// Include global constants
+Include "../../../freeflyer_stdlib/global_constants/config.ffmodule";
+Include "../../../freeflyer_stdlib/global_constants/freeflyer_magic_numbers.ffmodule";
+
+//// Include log procedures
+Include "../../../freeflyer_stdlib/log.ffmodule";
+
+//// Set up and show console
+Call consoleSetup(CONSOLE__DEFAULT_SIZE);
+
+//// Include other modules
+// [ other modules go here ]
+
+ApiLabel "includes_loaded"; // at this point, all includes have successfully been loaded
+
+
+CODE_LOCATION = 'FF3 config';
+Call logDebug("ingesting and validating config");
+
+// contains all input (configuration, paths, etc) for missionplan
+Struct Config;
+    Variable circularize_seed_kms;        // seed value for in-track velocity of circularize burn
+    Variable circularize_perturb_kms;     // perturb value for in-track velocity of circularize burn
+    Variable circularize_lower_limit_kms; // lower limit for in-track velocity of circularize burn
+    Variable circularize_upper_limit_kms; // upper limit for in-track velocity of circularize burn
+    Variable desired_sma_change_km;       // desired SMA change after burn pair (kilometers)
+    Variable post_burn_ecc_tol;           // tolerance on how circular the orbit needs to be after the burns
+    Variable raise_seed_kms;              // seed value for in-track velocity of raise burn
+    Variable raise_perturb_kms;           // perturb value for in-track velocity of raise burn
+    Variable raise_lower_limit_kms;       // lower limit for in-track velocity of raise burn
+    Variable raise_upper_limit_kms;       // upper limit for in-track velocity of raise burn
+    String   sc_display_name;             // DisplayName to use on demonstration spacecraft
+    Variable sma_change_tol_km;           // how close to desired SMA goal targeter needs to reach
+    String   test_message;                // test message to simply repeat as-is in response
+End;
+Include "../../../freeflyer_stdlib/config_ingestion.ffmodule"; // must go after Config defintion
+
+Define Procedure setConfigDefaults(Config config);
+    config.circularize_seed_kms        = UNDEFINED_VARIABLE;
+    config.circularize_perturb_kms     = UNDEFINED_VARIABLE;
+    config.circularize_lower_limit_kms = UNDEFINED_VARIABLE;
+    config.circularize_upper_limit_kms = UNDEFINED_VARIABLE;
+    config.desired_sma_change_km       = UNDEFINED_VARIABLE;
+    config.post_burn_ecc_tol           = UNDEFINED_VARIABLE;
+    config.raise_seed_kms              = UNDEFINED_VARIABLE;
+    config.raise_perturb_kms           = UNDEFINED_VARIABLE;
+    config.raise_lower_limit_kms       = UNDEFINED_VARIABLE;
+    config.raise_upper_limit_kms       = UNDEFINED_VARIABLE;
+    config.sc_display_name             = UNDEFINED_STRING;
+    config.sma_change_tol_km           = UNDEFINED_VARIABLE;
+    config.test_message                = UNDEFINED_STRING;
+EndProcedure;
+
+Define Procedure checkConfigForUndefinedFields(Config config);
+    Constant String CODE_LOCATION = 'checkConfigForUndefinedFields'; /// code location for logging
+    StringArray errors; /// collects all errors found during checks
+
+    If (config.circularize_seed_kms == UNDEFINED_VARIABLE);        errors.PushBack("field 'circularize_seed_kms' is missing from JSON");    End;
+    If (config.circularize_perturb_kms == UNDEFINED_VARIABLE);     errors.PushBack("field 'circularize_perturb_kms' is missing from JSON"); End;
+    If (config.circularize_lower_limit_kms== UNDEFINED_VARIABLE);  errors.PushBack("field 'circularize_lower_kms' is missing from JSON");   End;
+    If (config.circularize_upper_limit_kms == UNDEFINED_VARIABLE); errors.PushBack("field 'circularize_upper_kms' is missing from JSON");   End;
+    If (config.desired_sma_change_km == UNDEFINED_VARIABLE);       errors.PushBack("field 'desired_sma_change_km' is missing from JSON");   End;
+    If (config.post_burn_ecc_tol == UNDEFINED_VARIABLE);           errors.PushBack("field 'post_burn_ecc_tol' is missing from JSON");       End;
+    If (config.raise_seed_kms == UNDEFINED_VARIABLE);              errors.PushBack("field 'raise_seed_kms' is missing from JSON");          End;
+    If (config.raise_perturb_kms == UNDEFINED_VARIABLE);           errors.PushBack("field 'raise_perturb_kms' is missing from JSON");       End;
+    If (config.raise_lower_limit_kms == UNDEFINED_VARIABLE);       errors.PushBack("field 'raise_lower_kms' is missing from JSON");         End;
+    If (config.raise_upper_limit_kms == UNDEFINED_VARIABLE);       errors.PushBack("field 'raise_upper_kms' is missing from JSON");         End;
+    If (config.sc_display_name == UNDEFINED_STRING);               errors.PushBack("field 'sc_display_name' is missing from JSON");         End;
+    If (config.sma_change_tol_km == UNDEFINED_VARIABLE);           errors.PushBack("field 'sma_change_tol_km' is missing from JSON");       End;
+    If (config.test_message == UNDEFINED_STRING);                  errors.PushBack("field 'test_message' is missing from JSON");            End;
+
+    
+    Variable i; /// loop index
+    For i = 0 to errors.Dimension-1;
+        Call logError(errors[i]);
+    End;
+    
+    If (errors.Dimension);
+        Call safeStop("missing fields found when checking config. see logs for details.");
+    End;
+EndProcedure;
+
+//// ingest config
+json.MissingPropertyBehavior = JSON__ERROR_ON_MISSING_PROP;
+
+Config config; /// configuration for missionplan
+Call setConfigDefaults(config);
+
+String api_config_json; /// string used by the API layer to inject a serialized JSON string used as config
+
+ApiLabel "config_injection";
+
+Call ingestJSON(
+    // input
+    './default_config.json',     // path to default configuration file to be used if config string not set by API
+    api_config_json,             // JSON string to deserialize (leave empty to rely on fallback file)
+    JSON__ERROR_ON_MISSING_PROP, // if there are extra fields in the input JSON
+    // output
+    err,    // error message
+    config  // Config struct to be populated
+);
+If (err != '');
+   
+End;
+
+Call checkConfigForUndefinedFields(config);
+
+
+
+
+//// validate config
+StringArray errors; /// collects unrecoverable config errors
+
+If (abs(config.desired_sma_change_km) > 1000);
+    Call logWarn("suspiciously large desired_sma_change_km: " + config.desired_sma_change_km.ToString());
+End;
+
+If (config.sc_display_name == "");
+    errors.PushBack("sc_display_name must be non-empty");
+End;
+
+If (config.test_message == "");
+    errors.PushBack("test_message must be non-empty");
+End;
+
+
+For i = 0 to errors.Dimension-1;
+    Call logError(errors[i]);
+End;
+
+If (errors.Dimension);
+    Call safeStop("failed to pass config validation. see logs for details");
+End;
+
+
+CODE_LOCATION = 'FF4 sc setup';
+Call logDebug("setting up spacecraft");
+
+Spacecraft sc; /// spacecraft used for demonstration
+
+sc.DisplayName = config.sc_display_name;
+
+
+CODE_LOCATION = 'FF5 sma';
+Call logDebug("targeting section");
+
+
+DifferentialCorrector change_sma_dc; /// differential corrector used to target SMA change
+
+Call logDebug("targeting " + config.desired_sma_change_km.ToString()
+              + " km SMA change for " + sc.DisplayName
+);
+
+ImpulsiveBurn raise_burn; /// first burn, which raises SMA
+raise_burn.AttitudeSystem = IMPULSIVE_BURN_ATT__VNB;
+
+ImpulsiveBurn circularize_burn; /// second burn, which circularizes the orbit
+circularize_burn.AttitudeSystem = IMPULSIVE_BURN_ATT__VNB;
+
+Constant Variable orig_sc_blj2a = sc.BLJ2A; /// original BLJ2A value before maneuvers
+
+try_failed = 0;
+Try sending ErrorCount to try_failed;
+    Target using change_sma_dc;
+        Iterate sc;
+        
+        Vary raise_burn.BurnDirection[0] = config.raise_seed_kms + config.raise_perturb_kms
+                                           within <config.raise_lower_limit_kms,
+                                                   config.raise_upper_limit_kms>;
+
+        Vary circularize_burn.BurnDirection[0] = config.circularize_seed_kms + config.circularize_perturb_kms
+                                           within <config.circularize_lower_limit_kms,
+                                                   config.circularize_upper_limit_kms>;
+        Call logDebug("trying raise_burn delta-v:       " + raise_burn.BurnDirection[0].ToString() + " km/s");
+        Call logDebug("trying circularize_burn delta-v: " + circularize_burn.BurnDirection[0].ToString() + " km/s");
+
+
+
+        sc.Maneuver(raise_burn);
+        
+        sc.StepToApsis(FF_APOAPSIS);
+        
+        sc.Maneuver(circularize_burn);
+
+        
+
+        Call logDebug("change_sma_dc " + change_sma_dc.IterationMode + " | "
+                      + "achieved: " + sc.DisplayName + ".BLJ2A: " + sc.BLJ2A.ToString()
+                      + ", goal: " + (orig_sc_blj2a + config.desired_sma_change_km).ToString() + " km"
+                      + ", diff: " + (orig_sc_blj2a + config.desired_sma_change_km - sc.BLJ2A).ToString() + " km"
+        );
+        Call logDebug("change_sma_dc " + change_sma_dc.IterationMode + " | "
+                      + "achieved: " + sc.DisplayName + ".BLJ2E: " + sc.BLJ2E.ToString()
+                      + ", goal: 0"
+                      + ", diff: " + (0 - sc.BLJ2E).ToString()
+        );        
+        
+        Achieve sc.BLJ2A = (orig_sc_blj2a + config.desired_sma_change_km) +/- config.sma_change_tol_km;        
+        Achieve sc.BLJ2E = 0 +/- config.post_burn_ecc_tol;
+    End;
+End;
+If (try_failed);
+    Call logTryErrors();
+    Call safeStop("failed to target");
+End;
+
+Call logInfo("total targeter iterations: " + change_sma_dc.Iterations.ToString());
+Call logInfo("raise burn in-track delta-v: " + raise_burn.BurnDirection[0].ToString() + " km/s");
+Call logInfo("circularize burn in-track delta-v: " + circularize_burn.BurnDirection[0].ToString() + " km/s");
+Call logInfo("total SMA change: " + (sc.BLJ2A - orig_sc_blj2a).ToString() + " km");
+
+
+CODE_LOCATION = 'FF6 wrapup';
+Call logDebug("wrapping up");
+
+Struct ApiResponse;
+    Variable circularize_burn_deltav_kms; // in-track delta-v of circularize burn (km/s)
+    Variable missionplan_duration_sec;    // missionplan runtime duration (seconds)
+    String   missionplan_start_time;      // start time of missionplan
+    Variable raise_burn_deltav_kms;       // in-track delta-v of raise burn (km/s)
+    String   test_message;                // test message input during config, just passing through
+End;
+
+ApiResponse api_response; /// carries missionplan response back to the API
+api_response.circularize_burn_deltav_kms = circularize_burn.BurnDirection[0];
+api_response.missionplan_duration_sec    = (SystemTime() - missionplan_start_time).ToSeconds();
+api_response.missionplan_start_time      = missionplan_start_time.ConvertToCalendarDate();
+api_response.raise_burn_deltav_kms       = raise_burn.BurnDirection[0];
+api_response.test_message                = config.test_message + " (test!)";
+
+String api_response_json = json.Serialize(api_response); /// holds serialized copy of api_response struct
+
+Call logDebug("execution complete. total run time: " + api_response.missionplan_duration_sec.ToString() + " seconds");
+
+ApiLabel "main_execution_complete"; // at this point the json_response can be accessed but some
+                                    // wrapup work (such as log archiving) may remain
+
+
+
+ApiLabel "missionplan_end"; // nothing is allowed to happen after this line
+]]></ProjectScript>
+  <ProjectNotes></ProjectNotes>
+</FreeFlyerProjectFile>

@@ -1,0 +1,276 @@
+///////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Contains procedures related to creating, displaying, and saving logs
+//
+// consoleSetup() - sets up console in missionplan for logging
+// logMsg()       - root logging procedure used by the logging macros
+// logVerbose()   - uses logMsg() to log a 'verbose' level log
+// logDebug()     - uses logMsg() to log a 'debug' level log
+// logInfo()      - uses logMsg() to log a 'info' level log
+// logWarn()      - uses logMsg() to log a 'warn' level log
+// logError()     - uses logMsg() to log a 'error' level log
+// logCritical()  - uses logMsg() to log a 'critical' level log
+// logTryErrors() - logs errors from the FreeFlyer Diagnostic object
+// safeStop()     - logs a critical error and provides information to API layer
+//
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+// Allows for quick setup of a console window at the start of a missionplan.
+// Note that since this happens before logging has occurred, the only way to
+// report issues is via Reports.
+Define Procedure consoleSetup(
+        // input
+        Variable console_row_count // vertical size of console in rows of text
+
+        // modify
+        // (N/A)
+
+        // output
+        // (N/A)
+    );
+
+    If (console_row_count <= 0);
+        Report "consoleSetup(): console_row_count must be greater than zero."
+               + " received: " + console_row_count.ToString();
+        Stop; // no way to recover
+    End;
+
+    Console.BackColor        = CONSOLE__BACKGROUND_COLOR;
+    Console.CurrentFontType  = CONSOLE__FONT_TYPE_FIXED_WIDTH;
+    Console.CurrentTextColor = CONSOLE__FOREGROUND_COLOR;
+    Console.Dimension        = console_row_count;
+    Console.DockMode         = CONSOLE__DOCK_BOTTOM;
+    Console.UseStdOut        = TRUE;
+
+    Console.Show();
+
+EndProcedure;
+
+
+
+// Root logging procedure, utilized by the level-based logging macros. note that logMsg() is one
+// of the very few procedures to not use an 'err' string. This was done because of the simplicity
+// and ubiquitousness of logging calls
+Define Procedure logMsg(
+        // input
+        String log_level,       // severity of the log. typically DEBUG, INFO, WARN, ERROR, CRIT
+        String log_location,    // short message to help in locating the issue, similar to a stacktrace
+        String log_message      // message to be logged
+
+        // modify
+        // (N/A)
+
+        // output
+        // (N/A)
+    );
+
+    Constant String timestamp =
+        SystemTime().ConvertToCalendarDate(LOG__TIMESTAMP_FMT); /// current timestamp
+
+    Constant String missionplan_name = FF_Preferences.MissionPlanFilename.Split('.')[0]; /// filename of missionplan
+
+    String log_line = LOG__TEMPLATE.Replace('<TS>', timestamp)
+                                   .Replace('<LVL>', log_level)
+                                   .Replace('<MP>', missionplan_name)
+                                   .Replace('<LOC>', log_location)
+                                   .Replace('<MSG>', log_message); /// formatted log line
+
+    Variable line_color = LOG__COLOR_CRIT; /// color to use when outputting line (default to CRIT)
+
+    If (log_level == LOG__LEVEL_VERBOSE);
+        line_color = LOG__COLOR_VERBOSE;
+
+    ElseIf (log_level == LOG__LEVEL_DEBUG);
+        line_color = LOG__COLOR_DEBUG;
+
+    ElseIf (log_level == LOG__LEVEL_INFO);
+        line_color = LOG__COLOR_INFO;
+
+    ElseIf (log_level == LOG__LEVEL_WARN);
+        line_color = LOG__COLOR_WARN;
+
+    ElseIf (log_level == LOG__LEVEL_ERROR);
+        line_color = LOG__COLOR_ERROR;
+
+    ElseIf (log_level == LOG__LEVEL_CRIT);
+        line_color = LOG__COLOR_CRIT;
+
+    Else;
+        // this should never happen. but just in case, we'll update the log line
+        log_line += " (UNKNOWN LOG LEVEL REQUESTED: " + log_level + ")";
+
+    End;
+
+    Console.CurrentTextColor = line_color;
+
+    Report log_line to Console;
+
+    Console.CurrentTextColor = CONSOLE__FOREGROUND_COLOR;
+
+EndProcedure;
+
+
+
+// Macro for verbose level logging
+Define Macro logVerbose(log_message);
+    Call logMsg(LOG__LEVEL_VERBOSE, CODE_LOCATION, log_message);
+EndMacro;
+
+// Macro for debug level logging
+Define Macro logDebug(log_message);
+    Call logMsg(LOG__LEVEL_DEBUG, CODE_LOCATION, log_message);
+EndMacro;
+
+// Macro for info level logging
+Define Macro logInfo(log_message);
+    Call logMsg(LOG__LEVEL_INFO, CODE_LOCATION, log_message);
+EndMacro;
+
+// Macro for warn level logging
+Define Macro logWarn(log_message);
+    Call logMsg(LOG__LEVEL_WARN, CODE_LOCATION, log_message);
+EndMacro;
+
+// Macro for error level logging
+Define Macro logError(log_message);
+    Call logMsg(LOG__LEVEL_ERROR, CODE_LOCATION, log_message);
+EndMacro;
+
+// Macro for crit level logging
+Define Macro logCrit(log_message);
+    Call logMsg(LOG__LEVEL_CRIT, CODE_LOCATION, log_message);
+EndMacro;
+
+
+
+// macro version of logTryErrors() so user doesn't have to manually handle CODE_LOCATION
+Define Macro logTryErrors();
+    Call logTryErrorsProc(CODE_LOCATION);
+EndMacro;
+
+// Logs any errors found in the Diagnostics object, i.e. the errors that would
+// normally appear in the yellow box when using the FreeFlyer IDE.
+//
+// Note that there is no 'err' argument since  procedure does not return anything and
+// this way we don't need to add error checking to our error checking. Also note that
+// we overwrite CODE_LOCATION with the provided one so that it is easy to find where the
+// actual problem is.
+Define Procedure logTryErrorsProc(
+        // input
+        String code_location // location of the error, used for logging
+
+        // modify
+        // (N/A)
+
+        // output
+        // (N/A)
+    );
+
+    Constant String CODE_LOCATION = code_location; /// code location of failed Try block
+
+    StringArray diagnostic_errors = Diagnostics.GetLastErrorMessages(); /// error messages from Diagnostics
+
+    If (!diagnostic_errors.Dimension);
+        // exit procedure if there are no errors. this allows us the freedom to call this procedure
+        // even if we aren't certain there are any errors.
+        ExitProcedure;
+    End;
+
+    Call logError("Try block failed. Found " + diagnostic_errors.Dimension.ToString() + " error(s):");
+
+    If (diagnostic_errors.Dimension > 1);
+        Call logWarn("Found more than one diagnostic error. This means that an error was caught and" +
+                     " suppressed without calling logTryErrors(). Errors will now be logged in reverse" +
+                     " chronological order. Recommend finding the missing logTryErrors() call."
+        );
+    End;
+
+    Variable err_idx;            /// loop index for error messages
+    Variable err_line_idx;       /// loop index for lines within an error message
+    StringArray error_msg_lines; /// individual lines of an error message
+
+    // some error messages are broken up across multiple lines. to maintain proper formatting, we split
+    // each error on newlines and log them individually, thus ensuring they are still displayed on
+    // individual lines.
+    For err_idx = 0 to diagnostic_errors.Dimension-1;
+        error_msg_lines = diagnostic_errors[err_idx].Split(@"\n");
+
+        Call logError("--------------------------------------------------------------------------------------");
+        Call logError("Try error:");
+        For err_line_idx = 0 to error_msg_lines.Dimension-1;
+            Call logError(" > " + error_msg_lines[err_line_idx]);
+        End;
+        Call logError("--------------------------------------------------------------------------------------");
+    End;
+
+EndProcedure;
+
+
+// macro version of safeStop() so user doesn't have to manually handle CODE_LOCATION
+Define Macro safeStop(err_msg);
+    Call safeStopProc(CODE_LOCATION, err_msg);
+EndMacro;
+
+// FreeFlyer inexplicably doesn't allow the definition of structs inside procedures, so we'll just define it
+// in the global scope. This struct is used to convey information about a critical failure back to the API layer.
+Struct CriticalJsonResponse;
+    String   err_msg; // the error message sent to this procedure, essentially passing the critical error to API
+    Variable success; // indicates success or failure of missionplan. in this case, always 0 (fail)
+End;
+
+
+// Logs a critical error and provides additional information to the API layer
+Define Procedure safeStopProc(
+        // input
+        String code_location, // code location of critical error
+        String err_msg        // message to log and return to API
+
+        // modify
+        // (N/A - No returning from safeStop())
+
+        // output
+        // (N/A - no returning from safeStop())
+    );
+
+    Constant String CODE_LOCATION = code_location; /// code location passed from location with critical error
+
+    //// log the critical error before handling the shutdown
+    Call logCrit(err_msg);
+    Call logCrit("halting missionplan");
+
+
+
+    //// create and populate the API response
+    CriticalJsonResponse critical_json_response; /// struct containing information about critical failure
+
+    critical_json_response.err_msg = err_msg;
+    critical_json_response.success = 0;
+
+
+    // note that this must be the same name used normally since the API layer will be looking for
+    // a string with this name when trying to load the response.
+    String api_response_json; /// API response containing serialized JSON
+
+    JsonInterface json; /// JSON interface for serializing response to API layer
+    api_response_json = json.Serialize(critical_json_response);
+
+
+
+    //// ApiLabel targets
+    // all ApiLabels across entire project must be listed here in order to assure that execution flow
+    // always flows through this procedure properly. the expected used case is that the API will execute
+    // to the next ApiLabel and then check for any critical errors before continuing. if only the
+    // 'missionplan_end' ApiLabel was here, the API layer might attempt to interact with a missionplan that
+    // has already been halted.
+
+    ApiLabel "missionplan_init";
+    ApiLabel "includes_loaded";
+    ApiLabel "config_injection";
+    ApiLabel "main_execution_complete";
+    ApiLabel "missionplan_end";
+
+    Stop;
+
+EndProcedure;

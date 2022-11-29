@@ -1,0 +1,15 @@
+{
+    "circularize_seed_kms":        0.050,
+    "circularize_perturb_kms":     0.001,
+    "circularize_lower_limit_kms": -0.100,
+    "circularize_upper_limit_kms": 0.100,
+    "desired_sma_change_km":       50.0,
+    "post_burn_ecc_tol":           1e-4,
+    "raise_seed_kms":              0.050,
+    "raise_perturb_kms":           0.001,
+    "raise_lower_limit_kms":       -0.100,
+    "raise_upper_limit_kms":       0.100,
+    "sc_display_name":             "Endeavour",
+    "sma_change_tol_km":           0.010,
+    "test_message":                "light this candle"
+}
