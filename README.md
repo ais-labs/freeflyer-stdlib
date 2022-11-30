@@ -11,5 +11,5 @@ A standard library of useful utilities, procedures, constants, and interfaces fo
  - Familiarize yourself with the contents of `freeflyer_stdlib/global_constants` especially `freeflyer_magic_number.ffmodule`. There are a number of constant variables with semantic names that correspond to various "magic" numbers normally used in FreeFlyer. "Magic" meaning "devoid of any context and a number that just magically makes it work." Rather than using `my_impulsive_burn.AttitudeSystem = 1;` use `my_impulsive_burn.AttitudeSystem = IMPULSIVE_BURN_ATT__VNB;`. Note that the constants use a double underscore to separate a sort of namespace for that constant from the specific constant.
 
 ## Contributing
- - Contributions to the FreeFlyer standard library are extremely welcome. Please submit contributionsin the form of a merge request.
+ - Contributions to the FreeFlyer standard library are extremely welcome. Please submit contributions in the form of a merge request.
  - All contributions must adhere to the guidance laid out in `coding_standard.md` and will be subject to the judgment of the current repo maintainer.
