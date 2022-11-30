@@ -5,7 +5,7 @@ from python_freeflyer_interface.freeflyer import engine_utils
 
 engine = engine_utils.get_engine('test_engine')
 
-engine.load_missionplan('./tests/api_demo/OptimizationTestCR3BP_toRunOnKernelSys.MissionPlan')
+engine.load_missionplan('./tests/api_demo/python_freeflyer_api_demo.MissionPlan')
 
 engine.run_to_apilabel('config_injection')
 
