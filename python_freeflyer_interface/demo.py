@@ -10,13 +10,21 @@ engine.load_missionplan('./tests/api_demo/python_freeflyer_api_demo.MissionPlan'
 engine.run_to_apilabel('config_injection')
 
 config = {
-    "output_ephem_path_prefix": "./ConvergedTrajectory_",
-    "patch_point_file_path":    "./heteroclinic.txt",
-    "propagator_type":          "RK89",
-    "show_visuals":             1,
-    "start_epoch":              "Jan 01 2024 12:00:00.000",
-    "use_ff_optimizer":         0,
+    'circularize_seed_kms':        0.050,
+    'circularize_perturb_kms':     0.001,
+    'circularize_lower_limit_kms': -0.100,
+    'circularize_upper_limit_kms': 0.100,
+    'desired_sma_change_km':       25.0,
+    'post_burn_ecc_tol':           1e-4,
+    'raise_seed_kms':              0.050,
+    'raise_perturb_kms':           0.001,
+    'raise_lower_limit_kms':       -0.100,
+    'raise_upper_limit_kms':       0.100,
+    'sc_display_name':             "Endeavour",
+    'sma_change_tol_km':           0.010,
+    'test_message':                "light this candle",
 }
+
 
 
 engine.set_string('api_config_json', json.dumps(config))
