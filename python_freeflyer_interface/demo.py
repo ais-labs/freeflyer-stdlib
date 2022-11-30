@@ -42,4 +42,12 @@ for log_line in logs:
     print(f'{log_line}')
 
 
-print(result)
+print(f"missionplan start time: {result['missionplan_start_time']}")
+print(f"missionplan duration: {result['missionplan_duration_sec']:.2f} seconds")
+print(f"raise burn in-track delta-v: "
+      f"{result['raise_burn_deltav_kms']:.5f} km/s"
+)
+print(f"circularize burn in-track delta-v: "
+      f"{result['circularize_burn_deltav_kms']:.5f} km/s"
+)
+print(f"test message: {result['test_message']}")
