@@ -113,11 +113,11 @@ Variable      try_failed; /// indicates a Try block has failed
 JsonInterface json;       /// interface used for ingesting and outputting JSON
 
 //// Include global constants
-Include "../../../freeflyer_stdlib/global_constants/config.ffmodule";
-Include "../../../freeflyer_stdlib/global_constants/freeflyer_magic_numbers.ffmodule";
+Include @"$(FF_STDLIB)/global_constants/config.ffmodule";
+Include @"$(FF_STDLIB)/global_constants/freeflyer_magic_numbers.ffmodule";
 
 //// Include log procedures
-Include "../../../freeflyer_stdlib/log.ffmodule";
+Include @"$(FF_STDLIB)/log.ffmodule";
 
 //// Set up and show console
 Call consoleSetup(CONSOLE__DEFAULT_SIZE);
@@ -152,7 +152,7 @@ Struct Config;
     Variable sma_change_tol_km;           // how close to desired SMA goal targeter needs to reach
     String   test_message;                // test message to simply repeat as-is in response
 End;
-Include "../../../freeflyer_stdlib/config_ingestion.ffmodule"; // must go after Config defintion
+Include @"$(FF_STDLIB)/config_ingestion.ffmodule"; // must go after Config defintion
 
 Define Procedure setConfigDefaults(Config config);
     config.circularize_seed_kms        = UNDEFINED_VARIABLE;
@@ -394,11 +394,11 @@ Variable      try_failed; /// indicates a Try block has failed
 JsonInterface json;       /// interface used for ingesting and outputting JSON
 
 //// Include global constants
-Include "../../../freeflyer_stdlib/global_constants/config.ffmodule";
-Include "../../../freeflyer_stdlib/global_constants/freeflyer_magic_numbers.ffmodule";
+Include @"$(FF_STDLIB)/global_constants/config.ffmodule";
+Include @"$(FF_STDLIB)/global_constants/freeflyer_magic_numbers.ffmodule";
 
 //// Include log procedures
-Include "../../../freeflyer_stdlib/log.ffmodule";
+Include @"$(FF_STDLIB)/log.ffmodule";
 
 //// Set up and show console
 Call consoleSetup(CONSOLE__DEFAULT_SIZE);
@@ -428,7 +428,7 @@ Struct Config;
     Variable sma_change_tol_km;           // how close to desired SMA goal targeter needs to reach
     String   test_message;                // test message to simply repeat as-is in response
 End;
-Include "../../../freeflyer_stdlib/config_ingestion.ffmodule"; // must go after Config defintion
+Include @"$(FF_STDLIB)/config_ingestion.ffmodule"; // must go after Config defintion
 
 Define Procedure setConfigDefaults(Config config);
     config.circularize_seed_kms        = UNDEFINED_VARIABLE;
