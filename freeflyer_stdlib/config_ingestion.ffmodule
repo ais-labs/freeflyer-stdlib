@@ -33,39 +33,39 @@ Define Procedure ingestJSON(
         json.MissingPropertyBehavior = missing_property_behavior;
     End;
     If (try_failed);
-        Call logTryErrors();
+        //Call logTryErrors();
         err = "failed to set json.MissingPropertyBehavior to value: " + missing_property_behavior.ToString();
-        Call logError(err);
+        //Call logError(err);
         ExitProcedure;
     End;
 
     If (json_string != '');
-        Call logInfo("provided JSON string is non-empty. populating Config struct using JSON string.");
+        //Call logInfo("provided JSON string is non-empty. populating Config struct using JSON string.");
 
         try_failed = 0; Try sending ErrorCount to try_failed;
             json.Deserialize(json_string, config);
         End;
         If (try_failed);
-            Call logTryErrors();
-            Call safeStop("failed to deserialize JSON string");
+            //Call logTryErrors();
+            //Call safeStop("failed to deserialize JSON string");
         End;
 
-        Call logInfo("JSON string successfully deserialized and loaded into Config struct");
+        //Call logInfo("JSON string successfully deserialized and loaded into Config struct");
         ExitProcedure;
     End;
 
-    Call logInfo("provided JSON string is empty. will attempt to deserialize from file: " + json_fallback_file_path);
+    //Call logInfo("provided JSON string is empty. will attempt to deserialize from file: " + json_fallback_file_path);
 
     try_failed = 0; Try sending ErrorCount to try_failed;
         json.DeserializeFromFile(json_fallback_file_path, config);
     End;
     If (try_failed);
-        Call logTryErrors();
+        //Call logTryErrors();
         err = "failed to deserialize JSON string";
-        Call logError(err);
+        //Call logError(err);
         ExitProcedure;
     End;
 
-    Call logInfo("JSON file '" + json_fallback_file_path + "' successfully deserialized and loaded into Config struct");
+    //Call logInfo("JSON file '" + json_fallback_file_path + "' successfully deserialized and loaded into Config struct");
 
 EndProcedure;
